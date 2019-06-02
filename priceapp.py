@@ -5,7 +5,7 @@ from flask import request
 import json
 
 app = Flask(__name__)
-price_tasks = [
+product_price_lookup = [
     {
         "prices": [
             {
@@ -70,23 +70,29 @@ orders = [{
 #         else:
 #             new_task[field] = task[field]
 #     return new_task
-def parse_product_value(product_id):
-    # price_list = price_tasks['prices']
-    # for item in price_list:
-    #     if product_id == item['product_id']:
-    #         return item[]
-    item = [ item for item in price_tasks['prices'] if item['product_id'] == product_id ]
-    return item
 
+# The function returns  the price of each product from product_pricing_lookup
+def get_product_price(product_id):
+    price_lookup = [prod for prod in product_price_lookup[0]['prices'] if product_id == prod['product_id']]
+    return price_lookup
 
-def calculate_price(orders):
+# The function returns  the vat bands from product_pricing_lookup
+def get_vat_price():
+    vat_lookup =  product_price_lookup[0]['vat_bands']
+    return vat_lookup
 
+def calculate_order_price(orders):
      for order in orders:
          if "items" in order.keys():
             item_list_on_order = order["items"]
-            for productids in item_list_on_order and len(item_list_on_order) !=  0 :
-                parse_product_value(productids['product_id'])
-            pass
+            particulars =[]
+            for productids in item_list_on_order:
+                single_product_price_look_up = get_product_price(productids['product_id'])
+                vat_look_up = get_vat_price()
+                cal_each_product_total = round(productids['quantity'] * single_product_price_look_up[0]['price'],2)
+                cal_each_product_vat_total = round(vat_look_up[single_product_price_look_up[0]['vat_band']] * cal_each_product_total,2)
+                particulars.append({ "product_id": productids['product_id'],"total_price_per_product": cal_each_product_total,"vat_total":cal_each_product_vat_total})
+            return particulars
 
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
 def get_tasks():
@@ -94,12 +100,22 @@ def get_tasks():
 
 
 @app.route('/todo/api/v1.0/tasks/<int:order_id>', methods=['GET'])
-def get_task(order_id):
+def get_task(order_id, total_price=0, total_vat=0):
     order = [order for order in orders if order['id'] == order_id]
-    calculate_price(order)
+    detailed_order_and_price = calculate_order_price(order)
+    for x in detailed_order_and_price:
+        total_price += x['total_price_per_product']
+        total_vat += x['vat_total']
+    total_price_with_vat = total_price + total_vat
+    final_json = {
+        'Total_Price': round(total_price_with_vat,2),
+        'Total_vat':total_vat,
+        'particulars':detailed_order_and_price
+    }
+
     if len(order) == 0:
         abort(404)
-    return jsonify({'order': order[0]})
+    return jsonify({'order': final_json})
 
 
 @app.errorhandler(404)
@@ -112,39 +128,13 @@ def create_task():
     if not request.json or not 'title' in request.json:
         abort(400)
     task = {
-        'id': price_tasks[-1]['id'] + 1,
+        'id': orders[-1]['id'] + 1,
         'title': request.json['title'],
         'description': request.json.get('description', ""),
         'done': False
     }
-    price_tasks.append(task)
+    orders.append(task)
     return jsonify({'task': task}), 201
-
-@app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['PUT'])
-def update_task(task_id):
-    task = [task for task in price_tasks if task['id'] == task_id]
-    if len(task) == 0:
-        abort(404)
-    if not request.json:
-        abort(400)
-    if 'title' in request.json and type(request.json['title']) != str:
-        abort(400)
-    if 'description' in request.json and type(request.json['description']) is not str:
-        abort(400)
-    if 'done' in request.json and type(request.json['done']) is not bool:
-        abort(400)
-    task[0]['title'] = request.json.get('title', task[0]['title'])
-    task[0]['description'] = request.json.get('description', task[0]['description'])
-    task[0]['done'] = request.json.get('done', task[0]['done'])
-    return jsonify({'task': task[0]})
-
-@app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['DELETE'])
-def delete_task(task_id):
-    task = [task for task in price_tasks if task['id'] == task_id]
-    if len(task) == 0:
-        abort(404)
-    price_tasks.remove(task[0])
-    return jsonify({'result': True})
 
 if __name__ == '__main__':
     app.run(debug=True)
