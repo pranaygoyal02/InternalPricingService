@@ -104,7 +104,7 @@ def get_currency_converter_value(val):
     try:
         #Initialize a cache object for each Thread
         cache = SimpleCache(default_timeout=60)
-        #This is purely  hack for setting GBP to EUR value to 1.2 to illustrate cache works
+        #This is purely  hack for setting GBP to EUR value to 1.2 to illustrate cache works for the purpose of demo
         cache.set('GBP_EUR',1.12)
         cache.set('GBP_USD',1.36)
 
