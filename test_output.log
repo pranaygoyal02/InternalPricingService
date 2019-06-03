@@ -1,0 +1,55 @@
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 453
+Server: Werkzeug/0.15.4 Python/3.6.5
+Date: Mon, 03 Jun 2019 16:54:51 GMT
+
+{
+  "order": {
+    "Total_Price": 2807.83, 
+    "Total_vat": 119.8, 
+    "currency": "USD", 
+    "particulars": [
+      {
+        "product_id": 1, 
+        "total_price_per_product": 599, 
+        "vat_total": 119.8
+      }, 
+      {
+        "product_id": 2, 
+        "total_price_per_product": 1250, 
+        "vat_total": 0
+      }, 
+      {
+        "product_id": 3, 
+        "total_price_per_product": 250, 
+        "vat_total": 0
+      }
+    ]
+  }
+}
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 345
+Server: Werkzeug/0.15.4 Python/3.6.5
+Date: Mon, 03 Jun 2019 16:56:06 GMT
+
+{
+  "order": {
+    "Total_Price": 7593.33, 
+    "Total_vat": 958.4, 
+    "currency": "USD", 
+    "particulars": [
+      {
+        "product_id": 1, 
+        "total_price_per_product": 4792, 
+        "vat_total": 958.4
+      }, 
+      {
+        "product_id": 3, 
+        "total_price_per_product": 250, 
+        "vat_total": 0
+      }
+    ]
+  }
+}

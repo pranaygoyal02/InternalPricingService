@@ -5,7 +5,7 @@ from flask import request
 import requests
 from requests.exceptions import ProxyError
 from werkzeug.contrib.cache import SimpleCache
-
+import time
 
 app = Flask(__name__)
 product_price_lookup = [
@@ -102,11 +102,12 @@ def get_vat_price():
 
 def get_currency_converter_value(val):
     try:
+        start = time.clock()
         #Initialize a cache object for each Thread
         cache = SimpleCache(default_timeout=60)
         #This is purely  hack for setting GBP to EUR value to 1.2 to illustrate cache works for the purpose of demo
-        cache.set('GBP_EUR',1.12)
-        cache.set('GBP_USD',1.36)
+        #cache.set('GBP_EUR',1.12)
+        #cache.set('GBP_USD',1.36)
 
         #Check if the value already exist in the currency
         currency_val = cache.get(val)
@@ -117,12 +118,15 @@ def get_currency_converter_value(val):
             #set the cache for the given currency with default_timeout 300
             for k,v in r_dict():
                 cache.set(k,v, timeout=5 * 60)
+                print("Time taken to run the function:{0}".format(time.clock() - start))
             return jsonify(r.json())
         else:
+            print("Time taken to run the function:{0}".format(time.clock() - start))
             #return the value received
             return jsonify({val:currency_val})
     except ProxyError:
         print("Proxy Error")
+        print("Time taken to run the function:{0}".format(time.clock() - start))
         #setting a default value
         return jsonify({val:1.265471})
 
