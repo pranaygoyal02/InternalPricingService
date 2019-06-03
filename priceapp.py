@@ -1,8 +1,11 @@
 #!flask/bin/python
 from flask import Flask,jsonify,abort
-from flask import make_response,url_for
+from flask import make_response
 from flask import request
-import json
+import requests
+from requests.exceptions import ProxyError
+from werkzeug.contrib.cache import SimpleCache
+
 
 app = Flask(__name__)
 product_price_lookup = [
@@ -41,35 +44,50 @@ product_price_lookup = [
     }
 ]
 orders = [{
-        "id": 12345,
-        "customer": {},
-        "items": [
-            {
-                "product_id": 1,
-                "quantity": 1
-            },
-            {
-                "product_id": 2,
-                "quantity": 5
-            },
-            {
-                "product_id": 3,
-                "quantity": 1
-            }
-        ]
-    },{
-    "id":101
+    "id": 12345,
+    "customer": {},
+    "items": [
+        {
+            "product_id": 1,
+            "quantity": 1
+        },
+        {
+            "product_id": 2,
+            "quantity": 5
+        },
+        {
+            "product_id": 3,
+            "quantity": 1
+        }
+    ]
+},{
+    "id": 1000,
+    "customer": {},
+    "items": [
+        {
+            "product_id": 3,
+            "quantity": 4
+        },
+        {
+            "product_id": 2,
+            "quantity": 5
+        }
+    ]
+},{
+    "id": 5000,
+    "customer": {},
+    "items": [
+        {
+            "product_id": 1,
+            "quantity": 8
+        },
+        {
+            "product_id": 3,
+            "quantity": 1
+        }
+    ]
 }
 ]
-
-# def make_public_task(task):
-#     new_task = {}
-#     for field in task:
-#         if field == 'id':
-#             new_task['uri'] = url_for('get_task', task_id=task['id'], _external=True)
-#         else:
-#             new_task[field] = task[field]
-#     return new_task
 
 # The function returns  the price of each product from product_pricing_lookup
 def get_product_price(product_id):
@@ -80,6 +98,33 @@ def get_product_price(product_id):
 def get_vat_price():
     vat_lookup =  product_price_lookup[0]['vat_bands']
     return vat_lookup
+
+
+def get_currency_converter_value(val):
+    try:
+        #Initialize a cache object for each Thread
+        cache = SimpleCache(default_timeout=60)
+        #This is purely  hack for setting GBP to EUR value to 1.2 to illustrate cache works
+        cache.set('GBP_EUR',1.12)
+        cache.set('GBP_USD',1.36)
+
+        #Check if the value already exist in the currency
+        currency_val = cache.get(val)
+        if currency_val is None:
+            payload = {'q':val,'compact':'ultra','apiKey':'3dddc18b3b03275e8621'}
+            r = requests.get('https://free.currconv.com/api/v7/convert',params=payload)
+            r_dict = r.json()
+            #set the cache for the given currency with default_timeout 300
+            for k,v in r_dict():
+                cache.set(k,v, timeout=5 * 60)
+            return jsonify(r.json())
+        else:
+            #return the value received
+            return jsonify({val:currency_val})
+    except ProxyError:
+        print("Proxy Error")
+        #setting a default value
+        return jsonify({val:1.265471})
 
 def calculate_order_price(orders):
      for order in orders:
@@ -110,13 +155,34 @@ def get_task(order_id, total_price=0, total_vat=0):
     final_json = {
         'Total_Price': round(total_price_with_vat,2),
         'Total_vat':total_vat,
-        'particulars':detailed_order_and_price
+        'particulars':detailed_order_and_price,
+        'currency':'GBP'
     }
 
     if len(order) == 0:
         abort(404)
     return jsonify({'order': final_json})
 
+@app.route('/todo/api/v1.0/tasks/<int:order_id>/<curr>', methods=['GET'])
+def get_task_currency(order_id,curr,total_price=0, total_vat=0,):
+    val = get_currency_converter_value(curr)
+    val = val.json[curr]
+    order = [order for order in orders if order['id'] == order_id]
+    detailed_order_and_price = calculate_order_price(order)
+    for x in detailed_order_and_price:
+        total_price += x['total_price_per_product']
+        total_vat += x['vat_total']
+    total_price_with_vat = (total_price + total_vat) * val
+    final_json = {
+        'Total_Price': round(total_price_with_vat,2),
+        'Total_vat':total_vat,
+        'particulars':detailed_order_and_price,
+        'currency': curr[-3:]
+    }
+
+    if len(order) == 0:
+        abort(404)
+    return jsonify({'order': final_json})
 
 @app.errorhandler(404)
 def not_found(error):
@@ -129,9 +195,8 @@ def create_task():
         abort(400)
     task = {
         'id': orders[-1]['id'] + 1,
-        'title': request.json['title'],
-        'description': request.json.get('description', ""),
-        'done': False
+        'customer': request.json['customer',""],
+        'items': request.json.get('items', ""),
     }
     orders.append(task)
     return jsonify({'task': task}), 201
