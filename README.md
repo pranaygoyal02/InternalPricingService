@@ -95,6 +95,7 @@ I have not been able to complete the testing because of the limited time:
   a) get_currency_converter_value()
   b) get_product_price(product_id)
   c) get_task_currency()
+2) Error handling if the currency format is not specified or doesnot exist. 
 
 Since the method interacts with an external API we need to use mocks to test the API
 
@@ -111,9 +112,14 @@ Enhancements :( If I  had more time, what improvements would you make if any?)
 
 Q) What bits did you find the toughest? What bit are you most proud of? In both cases, why?
 
-Difficult bits: 
+What bits did you find the toughest? What bit are you most proud of? In both cases, why?: 
+Difficult bits: ( Need more time to implement this)
 1) Implementation of Memcache. I want to replace SimpleCache with Memcache so that multiple request can share the same resource.
 2) I received Proxy Error while calling the currency converter API. I couldn't resolve the proxy error at my end.
+ 
+ProudOfMoments:
+When the curl started showing right results
+
 
 Q) What one thing could we do to improve this test?
 More clear expectations around from the test might really help determine the level of details required
@@ -123,3 +129,5 @@ Work in progress:
 
 #curl -i -H "Content-Type: application/json" -X POST -d '{"items":[{\"product_id\": 1,\"quantity\":1}]}' http://localhost:5000/todo/api/v1.0/tasks
 
+What bits did you find the toughest? What bit are you most proud of? In both cases, why?
+Implementation of Memcache

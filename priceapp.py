@@ -116,6 +116,8 @@ def get_currency_converter_value(val):
             r = requests.get('https://free.currconv.com/api/v7/convert',params=payload)
             r_dict = r.json()
             #set the cache for the given currency with default_timeout 300
+            if bool(r_dict) == False:
+                raise Exception(' Currency Format not found: {}'.format(val))
             for k,v in r_dict.items():
                 cache.set(k,v, timeout=5 * 60)
                 print("Time taken to run the function:{0}".format(time.clock() - start))
@@ -129,6 +131,8 @@ def get_currency_converter_value(val):
         print("Time taken to run the function:{0}".format(time.clock() - start))
         #setting a default value in case it errors out for demo
         return jsonify({val:1.265471})
+
+
 
 def calculate_order_price(orders):
      for order in orders:
