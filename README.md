@@ -87,12 +87,6 @@ e.g for EURO
 }
 ```
 
-
-#How to add an order?
-
-#curl -i -H "Content-Type: application/json" -X POST -d '{"items":[{\"product_id\": 1,\"quantity\":1}]}' http://localhost:5000/todo/api/v1.0/tasks
-
-
 Testing for the pricing logic : 
 
 I have not been able to complete the testing because of the limited time: 
@@ -113,7 +107,7 @@ Enhancements :( If I  had more time, what improvements would you make if any?)
 2) Reduce the time taken by API and also introduce a logic to retry if the API doesn't give a response in a particular 
    amount of time.
 3) Add Unit Test and Integration Testing.
-
+4) Update on order json with API POST call
 
 Q) What bits did you find the toughest? What bit are you most proud of? In both cases, why?
 
@@ -123,3 +117,9 @@ Difficult bits:
 
 Q) What one thing could we do to improve this test?
 More clear expectations around from the test might really help determine the level of details required
+
+Work in progress:
+#How to add an order?
+
+#curl -i -H "Content-Type: application/json" -X POST -d '{"items":[{\"product_id\": 1,\"quantity\":1}]}' http://localhost:5000/todo/api/v1.0/tasks
+
